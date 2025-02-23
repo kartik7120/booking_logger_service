@@ -1,0 +1,30 @@
+// Creating a grpc service that will be used to log messages
+
+syntax = "proto3";
+
+// Write a go_package option to specify the Go package name
+
+option go_package = "github.com/ck3g/SomeDaysOfGo/grpc/cmd/api/logger_service";
+
+enum LogLevel {
+    INFO = 0;
+    WARNING = 1;
+    DEBUG = 2;
+    ERROR = 3;
+    FATAL = 4;
+}
+
+message LogRequest {
+    string message = 1;
+    LogLevel level = 2;
+}
+
+message LogResponse {
+    string status = 1;
+    string message = 2;
+    string error = 3;
+}
+
+service LoggerService {
+    rpc Log(LogRequest) returns (LogResponse) {};
+}
