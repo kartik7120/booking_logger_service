@@ -1,39 +1,48 @@
 package main
 
 import (
-	"context"
-	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/contrib/bridges/otellogrus"
-	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	otel_log "go.opentelemetry.io/otel/sdk/log"
+	"google.golang.org/grpc"
+
+	pb "github.com/booking_logger_service/cmd/api"
+	grpcserver "github.com/booking_logger_service/cmd/api/grpcServer"
 )
 
 func main() {
-	logExporter, err := otlploghttp.New(context.Background())
+
+	lis, err := net.Listen("tcp", ":1100")
+
 	if err != nil {
-		// handle error
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// create log provider
-	log_provider := otel_log.NewLoggerProvider(
-		otel_log.WithProcessor(
-			otel_log.NewBatchProcessor(logExporter),
-		),
-	)
+	signalChan := make(chan os.Signal, 1)
 
-	defer log_provider.Shutdown(context.Background())
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	// Create an *otellogrus.Hook and use it in your application.
-	hook := otellogrus.NewHook("<signoz-golang>", otellogrus.WithLoggerProvider(log_provider), otellogrus.WithLevels(logrus.AllLevels))
+	// Creating a new grpc server
 
-	// Set the newly created hook as a global logrus hook
-	logrus.AddHook(hook)
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
 
-	// add a debug log
+	// Registering the grpc server
 
-	// logrus.Warn("This is a warning log")
-	logrus.Trace("This is a trace log")
+	pb.RegisterLoggerServiceServer(grpcServer, &grpcserver.LoggerServiceServer{
+		LogRequest: &pb.LogRequest{},
+	})
+
+	// Starting the grpc server
+
+	if err := grpcServer.Serve(lis); err != nil {
+		panic(err)
+	}
+
+	// Gracefully shutting down the grpc server
+
+	<-signalChan
+	grpcServer.GracefulStop()
 }
