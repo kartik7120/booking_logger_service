@@ -2,80 +2,54 @@ package logger
 
 import (
 	"context"
-	"log"
-	"os"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
-
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	otel_log "go.opentelemetry.io/otel/sdk/log"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-func NewLogger() *logrus.Logger {
-	logExporter, err := otlploghttp.New(context.Background(),
-		otlploghttp.WithEndpoint(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")),
-		otlploghttp.WithInsecure(),
-	)
+// NewLogger creates and returns a configured Logrus logger with OpenTelemetry hook
+func NewLogger() (*logrus.Logger, error) {
+	logger := logrus.New()
+
+	return logger, nil
+}
+
+func GetLoggerWithContext(ctx context.Context) (*logrus.Logger, error, *otel_log.LoggerProvider) {
+	logger, err := NewLogger()
+	if err != nil {
+		return nil, err, nil
+	}
+
+	exporter, err := otlploghttp.New(ctx, otlploghttp.WithInsecure())
 
 	if err != nil {
-		// handle error
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to create OpenTelemetry exporter: %v", err), nil
 	}
 
-	// create log provider
-	log_provider := otel_log.NewLoggerProvider(
+	// Create an OpenTelemetry log processor
+
+	logProvider := otel_log.NewLoggerProvider(
 		otel_log.WithProcessor(
-			otel_log.NewBatchProcessor(logExporter),
+			otel_log.NewBatchProcessor(exporter),
 		),
 	)
 
-	defer log_provider.Shutdown(context.Background())
+	// Set the OpenTelemetry log processor
 
-	// Create an *otellogrus.Hook and use it in your application.
-	hook := otellogrus.NewHook("<signoz-golang>", otellogrus.WithLoggerProvider(log_provider))
-	logger := logrus.New()
+	hook := otellogrus.NewHook("<signoz-golang>", otellogrus.WithLoggerProvider(logProvider), otellogrus.WithLevels(logrus.AllLevels))
+
 	logger.AddHook(hook)
+	logger.SetReportCaller(true)
+	logger.SetFormatter(&logrus.JSONFormatter{})
 
-	logLevel := os.Getenv("LOG_LEVEL")
-
-	if logLevel == "error" {
-		logger.SetLevel(logrus.ErrorLevel)
-	} else if logLevel == "info" {
-		logger.SetLevel(logrus.InfoLevel)
-	} else if logLevel == "debug" {
-		logger.SetLevel(logrus.DebugLevel)
-	} else {
-		logger.SetLevel(logrus.InfoLevel)
-	}
-
-	// Set the newly created hook as a global logrus hook
-
-	return logger
+	return logger, nil, logProvider
 }
 
-func GetTracerAndSpanID() (oteltrace.Tracer, oteltrace.Span) {
-	otel.SetTracerProvider(
-		sdktrace.NewTracerProvider(
-			sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		),
-	)
-
-	tracer := otel.GetTracerProvider().Tracer("signoz-tracer")
-	_, span := tracer.Start(context.Background(), "signoz-tracer")
-	defer span.End()
-
-	return tracer, span
-}
-
-func LogrusFields(span oteltrace.Span) logrus.Fields {
-	spanCtx := span.SpanContext()
-	fields := logrus.Fields{
-		"trace_id": spanCtx.TraceID().String(),
-		"span_id":  spanCtx.SpanID().String(),
+func AddHooks(logger *logrus.Logger, hooks ...logrus.Hook) {
+	for _, hook := range hooks {
+		logger.AddHook(hook)
 	}
-	return fields
 }
