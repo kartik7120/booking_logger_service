@@ -6,7 +6,9 @@
 // - protoc             v5.29.2
 // source: logger_service.proto
 
-package logger_service
+// Write a go_package option to specify the Go package name
+
+package pb
 
 import (
 	context "context"
@@ -21,7 +23,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LoggerService_Log_FullMethodName = "/LoggerService/Log"
+	LoggerService_Log_FullMethodName = "/pb.LoggerService/Log"
 )
 
 // LoggerServiceClient is the client API for LoggerService service.
@@ -110,7 +112,7 @@ func _LoggerService_Log_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LoggerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "LoggerService",
+	ServiceName: "pb.LoggerService",
 	HandlerType: (*LoggerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
