@@ -4,7 +4,9 @@ syntax = "proto3";
 
 // Write a go_package option to specify the Go package name
 
-option go_package = "github.com/ck3g/SomeDaysOfGo/grpc/cmd/api/logger_service";
+package pb; // The package name is pb and it is used to generate the Go code
+
+option go_package = "github.com/booking_logger_service/cmd/api;pb"; // why add ;pb at the end?  // The Go package name is github.com/booking_logger_service/cmd/api and the pb is the package name
 
 enum LogLevel {
     INFO = 0;
@@ -26,5 +28,5 @@ message LogResponse {
 }
 
 service LoggerService {
-    rpc Log(LogRequest) returns (LogResponse) {};
+    rpc Log(LogRequest) returns (LogResponse);
 }
