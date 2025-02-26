@@ -19,7 +19,7 @@ type LoggerServiceServer struct {
 }
 
 func (s *LoggerServiceServer) Log(ctx context.Context, in *pb.LogRequest) (*pb.LogResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 
 	defer cancel()
 
