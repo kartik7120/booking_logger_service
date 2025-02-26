@@ -1,8 +1,8 @@
 # TODO list
 
-- [] Create a new repository
-- [] Initialize git
+- [x] Create a new repository
+- [x] Initialize git
+- [x] add grpc and protobuf file and create a grpc server
+- [x] test thnigs if they are working properly
 - [] add logger_service inside a docker file
-- [] add grpc and protobuf file and create a grpc server
-- [] add a grpc client
-- [] test thnigs if they are working properly
+- [x] add a grpc client
