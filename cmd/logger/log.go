@@ -23,7 +23,7 @@ func GetLoggerWithContext(ctx context.Context) (*logrus.Logger, error, *otel_log
 		return nil, err, nil
 	}
 
-	exporter, err := otlploghttp.New(ctx, otlploghttp.WithInsecure())
+	exporter, err := otlploghttp.New(ctx, otlploghttp.WithInsecure(), otlploghttp.WithEndpoint("localhost:4318"))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OpenTelemetry exporter: %v", err), nil
