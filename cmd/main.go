@@ -41,6 +41,7 @@ func main() {
 	// Starting the grpc server
 
 	go func() {
+		fmt.Println("Logging service started")
 		if err := grpcServer.Serve(lis); err != nil {
 			panic(err)
 		}
@@ -49,6 +50,6 @@ func main() {
 	// Gracefully shutting down the grpc server
 
 	<-signalChan
-	fmt.Println("Shutting down the server")
+	fmt.Println("Shutting down the logging service")
 	grpcServer.GracefulStop()
 }
