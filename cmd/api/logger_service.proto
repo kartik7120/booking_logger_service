@@ -30,3 +30,4 @@ message LogResponse {
 service LoggerService {
     rpc Log(LogRequest) returns (LogResponse);
 }
+
